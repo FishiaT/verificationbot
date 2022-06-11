@@ -77,6 +77,7 @@ bot = interactions.Client(token=token)
     ],
 )
 async def verify(ctx: interactions.CommandContext, token: str = None):
+    user = ctx.author
     global api_key
     if ctx.author.roles:
         if verified_role_id in ctx.author.roles:
@@ -85,16 +86,21 @@ async def verify(ctx: interactions.CommandContext, token: str = None):
             if not api_key:
                 await ctx.send("No API keys available for verification! Please add one using the /add_api_key command! \n\n**NOTE: The API key must from Oraxen author, or who publish Oraxen to Polymart.** \n\n\n**If you are just an normal user, please report this to the moderators or developers immediately.**", ephemeral=True)
             else:
-                if not token:
-                    token = PolymartAPI.generateVerifyURL()
-                    await ctx.send("**Please login into your Polymart account, then visit this link to get your token. After that run this command again with the token argument to continue the verification process!** \n\n" + token, ephemeral=True)
+                user_id = PolymartAPI.verifyUser(token)
+                user_data = PolymartAPI.getUserData(api_key, user_id)
+                resource_user_data = PolymartAPI.getResourceUserData(api_key, resource_id, user_id)
+                username = user_data['response']['user']['username']
+                purchaseValid = resource_user_data['response']['resource']['purchaseValid']
+                if not purchaseValid:
+                    await ctx.send("**Polymart Verification Summary for " + str(ctx.author) + "\n\n**Username**: " + username + "\n**User ID**: " + user_id + "\n**Verification Status**: **UNVERIFIED** \n\n\nResult: Unfortunately, you didn't own Oraxen yet :(. Once you bought the plugin, come back and verify again to get access to buyer-only exclusive support channels! \n\n**IF YOU THINK THIS IS DONE BY ERROR, CONTACT SERVER\'S ADMINISTATOR!**")
                 else:
-                    user_id = PolymartAPI.verifyUser(user_token)
-                    user_data = PolymartAPI.getUserData(api_key, user_id)
-                    resource_user_data = PolymartAPI.getResourceUserData(api_key, resource_id, user_id)
-                    user = ctx.author
-                    await user.add_role(verified_role_id, server_id)
-                    await ctx.send("You has been verified successfully! Enjoy!", ephemeral=True)
+                    purchaseStatus = resource_user_data['response']['resource']['purchaseStatus']
+                    if purchaseStatus == "Manual" or purchaseStatus == "Imported":
+                        await user.add_role(verified_role_id, server_id)
+                        await ctx.send("**Polymart Verification Summary for " + str(ctx.author) + "\n\n**Username**: " + username + "\n**User ID**: " + user_id + "\n**Verification Status**: **VERIFIED** \n\n\nResult: You got added to buyer list of the plugin. Verified successfully!")
+                    else:
+                        await user.add_role(verified_role_id, server_id)
+                        await ctx.send("**Polymart Verification Summary for " + str(ctx.author) + "\n\n**Username**: " + username + "\n**User ID**: " + user_id + "\n**Verification Status**: **VERIFIED** \n**PayPal Status Code**: " + purchaseStatus + "\n\n\nResult: You have bought the plugin using Paypal. Verified successfully!")
     else:
         if not api_key:
              await ctx.send("No API keys available for verification! Please add one using the /add_api_key command! \n\n**NOTE: The API key must from Oraxen author, or who publish Oraxen to Polymart.** \n\n\n**If you are just an normal user, please report this to the moderators or developers immediately.**", ephemeral=True)
@@ -106,12 +112,18 @@ async def verify(ctx: interactions.CommandContext, token: str = None):
                 user_id = PolymartAPI.verifyUser(token)
                 user_data = PolymartAPI.getUserData(api_key, user_id)
                 resource_user_data = PolymartAPI.getResourceUserData(api_key, resource_id, user_id)
-                print("User ID: " + user_id)
-                print("User Data: " + str(user_data))
-                print("Resource User Data: " + str(resource_user_data))
-                user = ctx.author
-                await user.add_role(verified_role_id, server_id)
-                await ctx.send("You has been verified successfully! Enjoy!", ephemeral=True)
+                username = user_data['response']['user']['username']
+                purchaseValid = resource_user_data['response']['resource']['purchaseValid']
+                if not purchaseValid:
+                    await ctx.send("**Polymart Verification Summary for " + str(ctx.author) + "\n\n**Username**: " + username + "\n**User ID**: " + user_id + "\n**Verification Status**: **UNVERIFIED** \n\n\nResult: Unfortunately, you didn't own Oraxen yet :(. Once you bought the plugin, come back and verify again to get access to buyer-only exclusive support channels! \n\n**IF YOU THINK THIS IS DONE BY ERROR, CONTACT SERVER\'S ADMINISTATOR!**")
+                else:
+                    purchaseStatus = resource_user_data['response']['resource']['purchaseStatus']
+                    if purchaseStatus == "Manual" or purchaseStatus == "Imported":
+                        await user.add_role(verified_role_id, server_id)
+                        await ctx.send("**Polymart Verification Summary for " + str(ctx.author) + "\n\n**Username**: " + username + "\n**User ID**: " + user_id + "\n**Verification Status**: **VERIFIED** \n\n\nResult: You got added to buyer list of the plugin. Verified successfully!")
+                    else:
+                        await user.add_role(verified_role_id, server_id)
+                        await ctx.send("**Polymart Verification Summary for " + str(ctx.author) + "\n\n**Username**: " + username + "\n**User ID**: " + user_id + "\n**Verification Status**: **VERIFIED** \n**PayPal Status Code**: " + purchaseStatus + "\n\n\nResult: You have bought the plugin using Paypal. Verified successfully!")
 
 @bot.command(
     name="add_api_key",
