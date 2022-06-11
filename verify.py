@@ -103,12 +103,12 @@ async def verify(ctx: interactions.CommandContext, token: str = None):
                 token = PolymartAPI.generateVerifyURL()
                 await ctx.send("**Please login into your Polymart account, then visit this link to get your token. After that run this command again with the token argument to continue the verification process!** \n\n" + token, ephemeral=True)
             else:
-                user_id = PolymartAPI.verifyUser(user_token)
+                user_id = PolymartAPI.verifyUser(token)
                 user_data = PolymartAPI.getUserData(api_key, user_id)
                 resource_user_data = PolymartAPI.getResourceUserData(api_key, resource_id, user_id)
                 print("User ID: " + user_id)
-                print("User Data: " + user_data)
-                print("Resource User Data: " + resource_user_data)
+                print("User Data: " + str(user_data))
+                print("Resource User Data: " + str(resource_user_data))
                 user = ctx.author
                 await user.add_role(verified_role_id, server_id)
                 await ctx.send("You has been verified successfully! Enjoy!", ephemeral=True)
